@@ -122,7 +122,6 @@ function playerPick(card) {
     }
     hand.push(card);
     console.log(hand);
-    playerCardsHtml(hand, card);
 
     generate4RandomCards();
     if (hand1.length === 5 && hand2.length === 5) {

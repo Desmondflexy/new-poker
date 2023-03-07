@@ -1,1 +1,1 @@
-newpokerdesmond.netlify.app
+https://newpokerdesmond.netlify.app

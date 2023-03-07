@@ -7,7 +7,7 @@ class Player {
             const pos = deck_of_cards.indexOf(card);
             this.hand.push(...deck_of_cards.splice(pos, 1));
             return card;
-        };
+        }
         this.drop_all_cards = () => {
             deck_of_cards.push(...this.hand)
             this.hand = [];
@@ -22,74 +22,86 @@ class Player {
             this.hand.push(...deck_of_cards.splice(pos, 1));
             return deck_of_cards.length;
         }
+
+        function getRandomInt(min, max) {
+            min = Math.ceil(min);
+            max = Math.floor(max);
+            return Math.floor(Math.random() * (max - min + 1) + min);
+        }
     }
 }
+
 const [p1_span, p2_span] = document.querySelectorAll('.player span');
 const card_values = Array.from('23456789TJQKA');
-let deck_of_cards = []; resetDeckOfCards();
-const p1 = new Player();
-const p2 = new Player();
+let deck_of_cards; resetDeckOfCards();
 
+gameOn();
 
-const market = createCards(4, document.querySelectorAll('.cards')[2]);
-let chosen_card_index;
-for (let i = 0; i < 4; i++) {
-    market[i].addEventListener('click', () => {
-        chosen_card_index = i;
-        pick_card(chosen_card_index);
-    })
-}
+function gameOn() {
+    const p1 = new Player();
+    const p2 = new Player();
+    const market = createCards(4, document.querySelectorAll('.cards')[2]);
 
-let turn = 'player1';
-let random_cards = generate_random_cards(4);
-for (let i = 0; i < 4; i++) cardHtml(random_cards[i], market[i]);
+    let turn = 'Player 1';
+    let random_cards = generate_random_cards(4);
+    for (let i = 0; i < 4; i++) market[i].addEventListener('click', () => pick_card(i));
 
-function pick_card(card_index) {
-    if (p1.hand.length < 5 || p2.hand.length < 5) {
-        const card = random_cards[card_index];
-        if (turn === 'player1') {
-            p1.choose_card(card);
-            const p_html = createCards(1, document.querySelectorAll('.cards')[0]);
-            cardHtml(card, p_html[0]);
-            turn = 'player2';
-        } else {
-            p2.choose_card(card);
-            const p_html = createCards(1, document.querySelectorAll('.cards')[1]);
-            cardHtml(card, p_html[0]);
-            turn = 'player1';
+    document.querySelector('.button>button').addEventListener('click', () => resetGame());
+
+    function pick_card(card_index) {
+        if (p1.hand.length < 5 || p2.hand.length < 5) {
+            const card = random_cards[card_index];
+            if (turn === 'Player 1') {
+                p1.choose_card(card);
+                const p_html = createCards(1, document.querySelectorAll('.cards')[0]);
+                cardHtml(card, p_html[0]);
+                turn = 'Player 2';
+            } else {
+                p2.choose_card(card);
+                const p_html = createCards(1, document.querySelectorAll('.cards')[1]);
+                cardHtml(card, p_html[0]);
+                turn = 'Player 1';
+            }
+            setTimeout(() => {
+                random_cards = generate_random_cards(4);
+                document.querySelector('.button>button').innerHTML = `${turn} turn`;
+            }, 500);
         }
-        random_cards = generate_random_cards(4);
-        for (let i = 0; i < 4; i++) cardHtml(random_cards[i], market[i]);
         if (p1.hand.length === 5 && p2.hand.length === 5) {
-            document.querySelector('.pick.cards').remove();
             const data = pokerHands(p1.hand, p2.hand);
-            createPokerHtml(data.result, data.rankNames, data.handRanks)
+            createPokerHtml(data.result, data.rankNames, data.handRanks);
+            document.querySelector('.button>button').innerHTML = 'Restart Game';
         }
+    }
+
+    /**Generate n random cards from deck */
+    function generate_random_cards(n) {
+        const table = new Player();
+        for (let i = 0; i < n; i++) table.draw_a_card();
+        const random_cards = table.hand;
+        table.drop_all_cards();
+        for (let i = 0; i < 4; i++) {
+            const class_name = cardHtml(random_cards[i], market[i]);
+            flipCard(market[i], random_cards[i], 'back card')
+            // market[i].addEventListener('click', () => flipCard(market[i], random_cards[i], class_name));
+            market[i].onclick = () => flipCard(market[i], random_cards[i], class_name);
+        }
+        return random_cards;
     }
 }
 
-/**Generate n random cards from deck */
-function generate_random_cards(n) {
-    const market = new Player();
-    for (let i = 0; i < n; i++) market.draw_a_card();
-    const random_cards = market.hand;
-    market.drop_all_cards();
-    return random_cards;
+function resetGame() {
+    document.querySelectorAll('.card').forEach(elem => elem.remove());
+    p1_span.parentElement.parentElement.className = 'player';
+    p2_span.parentElement.parentElement.className = 'player';
+    gameOn();
 }
 
 function resetDeckOfCards() {
     deck_of_cards = [];
     card_values.forEach(val => {
-        Array.from('SHDC').forEach(suit => {
-            deck_of_cards.push(val + suit);
-        })
+        Array.from('SHDC').forEach(suit => deck_of_cards.push(val + suit));
     })
-}
-
-function getRandomInt(min, max) {
-    min = Math.ceil(min);
-    max = Math.floor(max);
-    return Math.floor(Math.random() * (max - min + 1) + min);
 }
 
 /**Creates a list of HTMLButtonElements of length k and append to parentElement. */
@@ -269,4 +281,14 @@ function createPokerHtml(result, rName, r) {
         p1_span.parentElement.parentElement.className = 'player loser';
         p2_span.parentElement.parentElement.className = 'player winner';
     } else p1_span.innerHTML = p2_span.innerHTML = 'draws';
+}
+
+function flipCard(card_div, card, class_name) {
+    if (card_div.innerHTML.codePointAt() === 127136) {
+        card_div.innerHTML = getCardUnicode(card);
+        card_div.className = class_name;
+    } else {
+        card_div.innerHTML = '&#127136;';
+        card_div.className = 'back card';
+    }
 }

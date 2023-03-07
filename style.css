@@ -135,6 +135,9 @@ body {
 .back.card:hover{
     box-shadow: 2px 2px 5px grey;
 }
+.back.card:active {
+    box-shadow: 0 0 3px grey;
+}
 
 .button button {
     padding: 10px;

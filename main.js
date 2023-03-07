@@ -1,21 +1,80 @@
-// The Game of Poker
+class Player {
+    constructor() {
+        this.hand = [];
+        /**Picks a random card from deck */
+        this.draw_a_card = () => {
+            const card = deck_of_cards[getRandomInt(0, deck_of_cards.length - 1)];
+            const pos = deck_of_cards.indexOf(card);
+            this.hand.push(...deck_of_cards.splice(pos, 1));
+            return card;
+        };
+        this.drop_all_cards = () => {
+            deck_of_cards.push(...this.hand)
+            this.hand = [];
+        }
 
-const [p1_span, p2_span] = document.querySelectorAll('.player span');
-const card_unicodes = getCardUnicodes();
-const card_values = Array.from('23456789TJQKA');
-
-let deck_of_cards; resetDeckOfCards();
-
-function createCards() {
-    const card_array = [];
-    for (let j = 0; j < 4; j++) {  // four cards
-        const card_div = document.createElement('button');
-        document.querySelector('.pick.cards').append(card_div);
-        card_div.innerHTML = '&#127136;';  // back of card
-        card_array.push(card_div);
-        card_div.className = 'card';
+        /**Player choose a card. Returns the remaining number of cards in deck.
+         * Returns -1 if choosen card is not in deck.
+        */
+        this.choose_card = (card) => {
+            const pos = deck_of_cards.indexOf(card);
+            if (pos === -1) return -1;
+            this.hand.push(...deck_of_cards.splice(pos, 1));
+            return deck_of_cards.length;
+        }
     }
-    return card_array;
+}
+const [p1_span, p2_span] = document.querySelectorAll('.player span');
+const card_values = Array.from('23456789TJQKA');
+let deck_of_cards = []; resetDeckOfCards();
+const p1 = new Player();
+const p2 = new Player();
+
+
+const market = createCards(4, document.querySelectorAll('.cards')[2]);
+let chosen_card_index;
+for (let i = 0; i < 4; i++) {
+    market[i].addEventListener('click', () => {
+        chosen_card_index = i;
+        pick_card(chosen_card_index);
+    })
+}
+
+let turn = 'player1';
+let random_cards = generate_random_cards(4);
+for (let i = 0; i < 4; i++) cardHtml(random_cards[i], market[i]);
+
+function pick_card(card_index) {
+    if (p1.hand.length < 5 || p2.hand.length < 5) {
+        const card = random_cards[card_index];
+        if (turn === 'player1') {
+            p1.choose_card(card);
+            const p_html = createCards(1, document.querySelectorAll('.cards')[0]);
+            cardHtml(card, p_html[0]);
+            turn = 'player2';
+        } else {
+            p2.choose_card(card);
+            const p_html = createCards(1, document.querySelectorAll('.cards')[1]);
+            cardHtml(card, p_html[0]);
+            turn = 'player1';
+        }
+        random_cards = generate_random_cards(4);
+        for (let i = 0; i < 4; i++) cardHtml(random_cards[i], market[i]);
+        if (p1.hand.length === 5 && p2.hand.length === 5) {
+            document.querySelector('.pick.cards').remove();
+            const data = pokerHands(p1.hand, p2.hand);
+            createPokerHtml(data.result, data.rankNames, data.handRanks)
+        }
+    }
+}
+
+/**Generate n random cards from deck */
+function generate_random_cards(n) {
+    const market = new Player();
+    for (let i = 0; i < n; i++) market.draw_a_card();
+    const random_cards = market.hand;
+    market.drop_all_cards();
+    return random_cards;
 }
 
 function resetDeckOfCards() {
@@ -27,109 +86,53 @@ function resetDeckOfCards() {
     })
 }
 
-function getCardUnicodes() {
+function getRandomInt(min, max) {
+    min = Math.ceil(min);
+    max = Math.floor(max);
+    return Math.floor(Math.random() * (max - min + 1) + min);
+}
+
+/**Creates a list of HTMLButtonElements of length k and append to parentElement. */
+function createCards(k, parentElement) {
+    const card_array = [];
+    for (let j = 0; j < k; j++) {
+        const card_div = document.createElement('button');
+        parentElement.append(card_div);
+        card_array.push(card_div);
+        card_div.className = 'card';
+    }
+    return card_array;
+}
+
+/**Use card string to customise card_div html element */
+function cardHtml(card, element) {
+    element.innerHTML = getCardUnicode(card);
+    let class_name;
+    if (card.includes('D') || card.includes('H')) {
+        element.className = 'red card';
+        class_name = 'red card';
+    } else {
+        element.className = 'black card';
+        class_name = 'black card';
+    }
+    return class_name;
+}
+
+function getCardUnicode(card) {
     const card_unicodes = {};
     let jj = 0;
     for (let j = 10; j <= 13; j++) {
         let ii = 0;
         for (let i = 1; i <= 14; i++) {
             if (i === 12) continue;
-            const card = 'A23456789TJQK'[ii] + 'SHDC'[jj];
+            const c = 'A23456789TJQK'[ii] + 'SHDC'[jj];
             const hex = `1f0${j.toString(16)}${i.toString(16)}`;
-            card_unicodes[card] = `&#${parseInt(hex, 16)};`;
+            card_unicodes[c] = `&#${parseInt(hex, 16)};`;
             ii++;
         }
         jj++;
     }
-    return card_unicodes;
-}
-
-/**Deals a random card to player from the deck of cards */
-function dealCard(player) {
-    const card = deck_of_cards[getRandomInt(0, deck_of_cards.length - 1)];
-    const pos = deck_of_cards.indexOf(card);
-    player.push(...deck_of_cards.splice(pos, 1));
-    return player;
-
-    /**Get a random integer in the interval [min, max] */
-    function getRandomInt(min, max) {
-        min = Math.ceil(min);
-        max = Math.floor(max);
-        return Math.floor(Math.random() * (max - min + 1) + min);
-    }
-}
-
-function flipCard(card_div, card, class_name) {
-    if (card_div.innerHTML.codePointAt() === 127136) {
-        card_div.innerHTML = card;
-        card_div.className = class_name;
-    } else {
-        card_div.innerHTML = '&#127136;';
-        card_div.className = 'back card';
-    }
-}
-
-
-// (0) - there are 52 cards in deck, player1 and player2 have no cards
-// (1) - 4 random cards generated from available cards in deck
-// (2) - player1 picks a card from the cards generated
-// (3) - repeat step (1)
-// (4) - player2 picks a card from the cards generated
-// (5) - repeat step (1) to (4) until player1 and player2 have 5 cards each
-// (6) - call pokerhands for player1 vs player2
-
-
-const hand1 = [];
-const hand2 = [];
-let turn = 'player1';
-const picks_array = createCards();
-
-function generate4RandomCards() {
-    const randomCards = [];
-    for (let i = 0; i < 4; i++) {
-        dealCard(randomCards);
-        cardHtml(randomCards[i], picks_array[i]);
-        picks_array[i].onclick = () => playerPick(randomCards[i]);
-    }
-}
-
-/**Use card string to customise card_div html element */
-function cardHtml(card, card_div) {
-    card_div.innerHTML = card_unicodes[card];
-    let class_name;
-    if (card.includes('D') || card.includes('H')) {
-        card_div.className = 'red card';
-        class_name = 'red card';
-    } else {
-        card_div.className = 'black card';
-        class_name = 'black card';
-    }
-}
-
-
-generate4RandomCards();
-
-function playerPick(card) {
-    let hand;
-    if (turn === 'player1') {
-        hand = hand1;
-        console.log(`${turn} picked ${card}`);
-        turn = 'player2';
-    } else {
-        hand = hand2;
-        console.log(`${turn} picked ${card}`);
-        turn = 'player1';
-    }
-    hand.push(card);
-    console.log(hand);
-
-    generate4RandomCards();
-    if (hand1.length === 5 && hand2.length === 5) {
-        picks_array.forEach(element => element.onclick = '');
-        const data = pokerHands(hand1, hand2);
-        createPokerHtml(data.hands, data.result, data.rankNames, data.handRanks);
-        resetDeckOfCards();
-    }
+    return card_unicodes[card];
 }
 
 function pokerHands(hand1, hand2) {
@@ -250,14 +253,8 @@ function pokerHands(hand1, hand2) {
     }
 }
 
-function createPokerHtml(hand, result, rName, r) {
-    for (let i = 0; i < 2; i++) {  // player
-        for (let j = 0; j < 5; j++) {  // card
-            const card_div = document.createElement('button');
-            document.querySelectorAll('.player>.cards')[i].append(card_div);
-            const card = hand[i][j];
-            cardHtml(card, card_div);
-        }
+function createPokerHtml(result, rName, r) {
+    for (let i = 0; i < 2; i++) {
         document.querySelectorAll('.player p')[i].innerHTML = `${rName[i]} <${r[i]}>`;
     }
 

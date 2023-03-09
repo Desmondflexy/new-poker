@@ -2,37 +2,29 @@ startGame();
 
 function startGame() {
     const deck_of_cards = [];
-    Array.from('23456789TJQKA').forEach(val => Array.from('SHDC').forEach(suit => deck_of_cards.push(val + suit)));
+    const card_values = Array.from('23456789TJQKA');
+    card_values.forEach(val => Array.from('SHDC').forEach(suit => deck_of_cards.push(val + suit)));
 
     class Player {
         constructor() {
             this.hand = [];
             /**Picks a random card from deck */
             this.draw_a_card = () => {
-                const card = deck_of_cards[getRandomInt(0, deck_of_cards.length - 1)];
+                const getRandomInt = (max) => Math.floor(Math.random() * (max + 1));
+                const card = deck_of_cards[getRandomInt(deck_of_cards.length - 1)];
                 const pos = deck_of_cards.indexOf(card);
                 this.hand.push(...deck_of_cards.splice(pos, 1));
-                return card;
             }
             this.drop_all_cards = () => {
-                deck_of_cards.push(...this.hand)
+                deck_of_cards.push(...this.hand);
                 this.hand = [];
             }
 
             /**Player choose a card. Returns the remaining number of cards in deck.
-             * Returns -1 if choosen card is not in deck.
-            */
+               Returns -1 if choosen card is not in deck.*/
             this.choose_card = (card) => {
                 const pos = deck_of_cards.indexOf(card);
-                if (pos === -1) return -1;
-                this.hand.push(...deck_of_cards.splice(pos, 1));
-                return deck_of_cards.length;
-            }
-
-            function getRandomInt(min, max) {
-                min = Math.ceil(min);
-                max = Math.floor(max);
-                return Math.floor(Math.random() * (max - min + 1) + min);
+                if (pos !== -1) this.hand.push(...deck_of_cards.splice(pos, 1));
             }
         }
     }
@@ -50,7 +42,7 @@ function startGame() {
     return;
 
     function pick_card(card_index) {
-        const delay = 500;
+        const delay = 300;
         if (p1.hand.length < 5 || p2.hand.length < 5) {
             const card = random_cards[card_index];
             if (turn === 'Player 1') {
@@ -62,7 +54,7 @@ function startGame() {
                     document.getElementById('p1').innerHTML = '';
                     document.getElementById('p2').innerHTML = '(active)';
                 }, delay);
-                
+
             } else {
                 p2.choose_card(card);
                 const p_html = createCards(1, document.querySelectorAll('.cards')[1]);
@@ -82,13 +74,11 @@ function startGame() {
 
         if (p2.hand.length === 5) {
             document.querySelectorAll('.pick>*').forEach(element => element.remove());
-            document.querySelector('.button>button').innerHTML = 'Restart Game';
             pokerHands(p1.hand, p2.hand);
         }
         return;
 
         function pokerHands(hand1, hand2) {
-            const card_values = Array.from('23456789TJQKA');
             const [r1, r2] = [rank(hand1), rank(hand2)];
 
             let result
@@ -259,18 +249,18 @@ function startGame() {
         return card_array;
     }
 
-    /**Use card string to customise card_div html element */
+    /**Use card string to customise html element */
     function cardHtml(card, element) {
         element.innerHTML = getCardUnicode(card);
-        let class_name;
         if (card.includes('D') || card.includes('H')) {
-            element.className = 'red card';
-            class_name = 'red card';
+            const class_name = 'red card';
+            element.className = class_name;
+            return class_name
         } else {
-            element.className = 'black card';
-            class_name = 'black card';
+            const class_name = 'black card';
+            element.className = class_name;
+            return class_name
         }
-        return class_name;
     }
 
     function getCardUnicode(card) {

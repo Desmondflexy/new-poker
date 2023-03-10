@@ -24,7 +24,7 @@ function startGame() {
                Returns -1 if choosen card is not in deck.*/
             this.choose_card = (card) => {
                 const pos = deck_of_cards.indexOf(card);
-                if (pos !== -1) this.hand.push(...deck_of_cards.splice(pos, 1));
+                this.hand.push(...deck_of_cards.splice(pos, 1));
             }
         }
     }

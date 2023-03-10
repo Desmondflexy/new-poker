@@ -38,7 +38,7 @@ function startGame() {
     let random_cards = generate_random_cards(4);
     for (let i = 0; i < 4; i++) market[i].addEventListener('click', () => pick_card(i));
 
-    document.querySelector('.button>button').addEventListener('click', () => restartGame());
+    document.querySelector('.button>button').addEventListener('click', restartGame);
     return;
 
     function pick_card(card_index) {
@@ -103,37 +103,37 @@ function startGame() {
                     else result = 'draw';
                 }
             }
-            createPokerHtml(result, [r1.name, r2.name], [r1.rank, r2.rank]);
+            createPokerHtml(result, [r1.name, r2.name]);
             return;
 
             /**Returns the rank of a hand in the card game of poker.*/
             function rank(hand) {
                 if (Array.from('TJQKA').every(i => hand.map(j => j[0]).includes(i)) && isSameSuit()) {
-                    return { score: 10, name: 'Royal Flush', rank: '1st' };
+                    return { score: 10, name: 'Royal Flush' };
 
                 } else if (isConsecutive() && isSameSuit()) {
-                    return { score: 9, name: 'Straight Flush', rank: '2nd' };
+                    return { score: 9, name: 'Straight Flush' };
 
                 } else if (nOfaKind(4) > 0) {
-                    return { score: 8, name: 'Four of a Kind', rank: '3rd' };
+                    return { score: 8, name: 'Four of a Kind' };
 
                 } else if (nOfaKind(3) > 0 && nOfaKind(2)) {
-                    return { score: 7, name: 'Full House', rank: '4th' };
+                    return { score: 7, name: 'Full House' };
 
                 } else if (isSameSuit()) {
-                    return { score: 6, name: 'Flush', rank: '5th' };
+                    return { score: 6, name: 'Flush' };
 
                 } else if (isConsecutive()) {
-                    return { score: 5, name: 'Straight', rank: '6th' };
+                    return { score: 5, name: 'Straight' };
 
                 } else if (nOfaKind(3) > 0) {
-                    return { score: 4, name: 'Three of a Kind', rank: '7th' };
+                    return { score: 4, name: 'Three of a Kind' };
 
                 } else if (nOfaKind(2) > 1) {
-                    return { score: 3, name: 'Two Pairs', rank: '8th' };
+                    return { score: 3, name: 'Two Pairs' };
 
                 } else return nOfaKind(2) > 0 ?
-                    { score: 2, name: 'One Pair', rank: '9th' } : { score: 1, name: 'High Card', rank: '10th' };
+                    { score: 2, name: 'One Pair' } : { score: 1, name: 'High Card' };
 
                 /**Checks if card values are consecutive */
                 function isConsecutive() {
@@ -189,10 +189,10 @@ function startGame() {
                 return 0;
             }
 
-            function createPokerHtml(result, rName, r) {
+            function createPokerHtml(result, rName) {
                 const [p1_span, p2_span] = document.querySelectorAll('.player span');
                 for (let i = 0; i < 2; i++) {
-                    document.querySelectorAll('.player p')[i].innerHTML = `${rName[i]} <${r[i]}>`;
+                    document.querySelectorAll('.player p')[i].innerHTML = rName[i];
                 }
 
                 if (result.includes('player1')) {

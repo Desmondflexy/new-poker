@@ -35,8 +35,9 @@ function startGame() {
     document.getElementById('p1').innerHTML = '(active)';
     let random_cards = generate_random_cards();
     for (let i = 0; i < 4; i++) {
-        market[i].addEventListener('click', () => pick_card(random_cards[i]));
+        market[i].addEventListener('click', pick_card)
     }
+
 
     document.querySelector('.button>button').addEventListener('click', restartGame);
     return;
@@ -47,30 +48,32 @@ function startGame() {
         for (let i = 0; i < 4; i++) table.draw_a_card();
         const random_cards = table.hand;
         table.drop_all_cards();
+        
         for (let i = 0; i < 4; i++) {
-            const class_name = cardHtml(random_cards[i], market[i]);
-            flipCard(market[i], random_cards[i], 'back card')
-            market[i].onclick = () => flipCard(market[i], random_cards[i], class_name);
+            market[i].dataset.card = random_cards[i];
+            cardHtml(random_cards[i], market[i]);
+            flipCard.call(market[i]);
+            market[i].onclick = flipCard;
         }
         return random_cards;
     }
 
-    function pick_card(chosen) {
+    function pick_card() {
         const delay = 300;
         if (p1.hand.length < 5 || p2.hand.length < 5) {
             if (turn === 'Player 1') {
-                p1.choose_card(chosen);
+                p1.choose_card(this.dataset.card);
                 const p_html = createCards(1, document.querySelectorAll('.cards')[0]);
-                cardHtml(chosen, p_html[0]);
+                cardHtml(this.dataset.card, p_html[0]);
                 turn = 'Player 2';
                 setTimeout(() => {
                     document.getElementById('p1').innerHTML = '';
                     document.getElementById('p2').innerHTML = '(active)';
                 }, delay);
             } else {
-                p2.choose_card(chosen);
+                p2.choose_card(this.dataset.card);
                 const p_html = createCards(1, document.querySelectorAll('.cards')[1]);
-                cardHtml(chosen, p_html[0]);
+                cardHtml(this.dataset.card, p_html[0]);
                 turn = 'Player 1';
                 setTimeout(() => {
                     document.getElementById('p1').innerHTML = '(active)';
@@ -192,26 +195,6 @@ function arrayCompare(arr1, arr2) {
     return 0;
 }
 
-function createPokerHtml(result, rName) {
-    const [p1_span, p2_span] = document.querySelectorAll('.player span');
-    for (let i = 0; i < 2; i++) {
-        document.querySelectorAll('.player p')[i].innerHTML = rName[i];
-    }
-
-    if (result.includes('player1')) {
-        p1_span.innerHTML = 'wins';
-        p2_span.innerHTML = 'loses';
-        p1_span.parentElement.parentElement.className = 'player winner';
-        p2_span.parentElement.parentElement.className = 'player loser';
-    } else if (result.includes('player2')) {
-        p1_span.innerHTML = 'loses';
-        p2_span.innerHTML = 'wins';
-        p1_span.parentElement.parentElement.className = 'player loser';
-        p2_span.parentElement.parentElement.className = 'player winner';
-    } else p1_span.innerHTML = p2_span.innerHTML = 'draws';
-    document.querySelectorAll('.player>p').forEach(p => p.style.display = 'block');
-}
-
 /**Creates a list of HTMLButtonElements of length k and append to parentElement. */
 function createCards(k, parentElement) {
     const card_array = [];
@@ -230,11 +213,11 @@ function cardHtml(card, element) {
     if (card.includes('D') || card.includes('H')) {
         const class_name = 'red card';
         element.className = class_name;
-        return class_name
+        element.dataset.class0 = class_name;
     } else {
         const class_name = 'black card';
         element.className = class_name;
-        return class_name
+        element.dataset.class0 = class_name;
     }
 }
 
@@ -255,14 +238,34 @@ function getCardUnicode(card) {
     return card_unicodes[card];
 }
 
-function flipCard(card_div, card, class_name) {
-    if (card_div.innerHTML.codePointAt() === 127136) {
-        card_div.innerHTML = getCardUnicode(card);
-        card_div.className = class_name;
+function flipCard() {
+    if (this.innerHTML.codePointAt() === 127136) {
+        this.innerHTML = getCardUnicode(this.dataset.card);
+        this.className = this.dataset.class0;
     } else {
-        card_div.innerHTML = '&#127136;';
-        card_div.className = 'back card';
+        this.innerHTML = '&#127136;';
+        this.className = 'back card';
     }
+}
+
+function createPokerHtml(result, rName) {
+    const [p1_span, p2_span] = document.querySelectorAll('.player span');
+    for (let i = 0; i < 2; i++) {
+        document.querySelectorAll('.player p')[i].innerHTML = rName[i];
+    }
+
+    if (result.includes('player1')) {
+        p1_span.innerHTML = 'wins';
+        p2_span.innerHTML = 'loses';
+        p1_span.parentElement.parentElement.className = 'player winner';
+        p2_span.parentElement.parentElement.className = 'player loser';
+    } else if (result.includes('player2')) {
+        p1_span.innerHTML = 'loses';
+        p2_span.innerHTML = 'wins';
+        p1_span.parentElement.parentElement.className = 'player loser';
+        p2_span.parentElement.parentElement.className = 'player winner';
+    } else p1_span.innerHTML = p2_span.innerHTML = 'draws';
+    document.querySelectorAll('.player>p').forEach(p => p.style.display = 'block');
 }
 
 function pokerHands(hand1, hand2) {

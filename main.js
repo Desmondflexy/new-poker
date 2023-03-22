@@ -12,9 +12,7 @@ class Player {
             deck_of_cards.push(...this.hand);
             this.hand = [];
         }
-
-        /**Player choose a card. Returns the remaining number of cards in deck.
-           Returns -1 if choosen card is not in deck.*/
+        /**Player choose a card.*/
         this.choose_card = (card) => {
             const pos = deck_of_cards.indexOf(card);
             this.hand.push(...deck_of_cards.splice(pos, 1));
@@ -30,67 +28,62 @@ function startGame() {
     const p1 = new Player(deck_of_cards);
     const p2 = new Player(deck_of_cards);
     const market = createCards(4, document.querySelectorAll('.cards')[2]);
+    market.forEach(button => button.addEventListener('click', pick_card));
 
     let turn = 'Player 1';
     document.getElementById('p1').innerHTML = '(active)';
-    let random_cards = generate_random_cards();
-    for (let i = 0; i < 4; i++) {
-        market[i].addEventListener('click', pick_card)
+    generate_random_cards();
+
+    document.querySelector('.button > button').addEventListener('click', restartGame);
+
+    function pick_card() {
+        const timeout = 1000;
+        if (turn === 'Player 1') {
+            p1.choose_card(this.dataset.cardvalue);
+            const p_html = createCards(1, document.querySelectorAll('.cards')[0]);
+            cardHtml(this.dataset.cardvalue, p_html[0]);
+            turn = 'Player 2';
+            setTimeout(() => {
+                document.getElementById('p1').innerHTML = '';
+                document.getElementById('p2').innerHTML = '(active)';
+            }, timeout);
+        } else {
+            p2.choose_card(this.dataset.cardvalue);
+            const p_html = createCards(1, document.querySelectorAll('.cards')[1]);
+            cardHtml(this.dataset.cardvalue, p_html[0]);
+            turn = 'Player 1';
+            setTimeout(() => {
+                document.getElementById('p1').innerHTML = '(active)';
+                document.getElementById('p2').innerHTML = '';
+            }, timeout);
+        }
+        document.querySelectorAll('.pick > button').forEach(button => button.disabled = true);
+
+        setTimeout(() => {
+            document.querySelectorAll('.pick > button').forEach(button => button.disabled = false);
+            generate_random_cards();
+            if (p2.hand.length === 5) {
+                document.querySelectorAll('.pick > button').forEach(button => button.remove());
+                pokerHands(p1.hand, p2.hand);
+            }
+        }, timeout);
+
+        setTimeout(() => market.forEach(button => {
+            if (button !== this) flipCard.call(button);
+        }), timeout / 5)
     }
-
-
-    document.querySelector('.button>button').addEventListener('click', restartGame);
-    return;
 
     /**Generate 4 random cards from deck */
     function generate_random_cards() {
         const table = new Player(deck_of_cards);
-        for (let i = 0; i < 4; i++) table.draw_a_card();
-        const random_cards = table.hand;
-        table.drop_all_cards();
-        
         for (let i = 0; i < 4; i++) {
-            market[i].dataset.card = random_cards[i];
-            cardHtml(random_cards[i], market[i]);
+            table.draw_a_card();
+            market[i].dataset.cardvalue = table.hand[i];
+            cardHtml(table.hand[i], market[i]);
             flipCard.call(market[i]);
-            market[i].onclick = flipCard;
+            market[i].addEventListener('click', flipCard)
         }
-        return random_cards;
-    }
-
-    function pick_card() {
-        const delay = 300;
-        if (p1.hand.length < 5 || p2.hand.length < 5) {
-            if (turn === 'Player 1') {
-                p1.choose_card(this.dataset.card);
-                const p_html = createCards(1, document.querySelectorAll('.cards')[0]);
-                cardHtml(this.dataset.card, p_html[0]);
-                turn = 'Player 2';
-                setTimeout(() => {
-                    document.getElementById('p1').innerHTML = '';
-                    document.getElementById('p2').innerHTML = '(active)';
-                }, delay);
-            } else {
-                p2.choose_card(this.dataset.card);
-                const p_html = createCards(1, document.querySelectorAll('.cards')[1]);
-                cardHtml(this.dataset.card, p_html[0]);
-                turn = 'Player 1';
-                setTimeout(() => {
-                    document.getElementById('p1').innerHTML = '(active)';
-                    document.getElementById('p2').innerHTML = '';
-                }, delay);
-            }
-            document.querySelectorAll('.pick>button').forEach(button => button.disabled = true);
-            setTimeout(() => {
-                document.querySelectorAll('.pick>button').forEach(button => button.disabled = false);
-                random_cards = generate_random_cards();
-            }, delay);
-        }
-
-        if (p2.hand.length === 5) {
-            document.querySelectorAll('.pick>*').forEach(element => element.remove());
-            pokerHands(p1.hand, p2.hand);
-        }
+        table.drop_all_cards();
     }
 }
 
@@ -210,15 +203,14 @@ function createCards(k, parentElement) {
 /**Use card string to customise html element */
 function cardHtml(card, element) {
     element.innerHTML = getCardUnicode(card);
+    let class_name;
     if (card.includes('D') || card.includes('H')) {
-        const class_name = 'red card';
-        element.className = class_name;
-        element.dataset.class0 = class_name;
+        class_name = 'red card';
     } else {
-        const class_name = 'black card';
-        element.className = class_name;
-        element.dataset.class0 = class_name;
+        class_name = 'black card';
     }
+    element.className = class_name;
+    element.dataset.class0 = class_name;
 }
 
 function getCardUnicode(card) {
@@ -240,7 +232,7 @@ function getCardUnicode(card) {
 
 function flipCard() {
     if (this.innerHTML.codePointAt() === 127136) {
-        this.innerHTML = getCardUnicode(this.dataset.card);
+        this.innerHTML = getCardUnicode(this.dataset.cardvalue);
         this.className = this.dataset.class0;
     } else {
         this.innerHTML = '&#127136;';

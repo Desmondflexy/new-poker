@@ -28,7 +28,10 @@ function startGame() {
     const p1 = new Player(deck_of_cards);
     const p2 = new Player(deck_of_cards);
     const market = createCards(4, document.querySelectorAll('.cards')[2]);
-    market.forEach(button => button.addEventListener('click', pick_card));
+    market.forEach(button => {
+        button.addEventListener('click', pick_card);
+        button.addEventListener('click', flipCard);
+    })
 
     let turn = 'Player 1';
     document.getElementById('p1').innerHTML = '(active)';
@@ -81,7 +84,6 @@ function startGame() {
             market[i].dataset.cardvalue = table.hand[i];
             cardHtml(table.hand[i], market[i]);
             flipCard.call(market[i]);
-            market[i].addEventListener('click', flipCard)
         }
         table.drop_all_cards();
     }
@@ -93,7 +95,6 @@ function restartGame() {
     document.querySelectorAll('.player>p').forEach(p => p.style.display = 'none');
     document.querySelectorAll('.player span').forEach(span => span.innerHTML = '');
     startGame();
-    return;
 }
 
 /**Full 52 deck of cards */
